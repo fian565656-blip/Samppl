@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Kamera Full Layar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #000;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        #video, #canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Biar video pas tanpa terdistorsi */
+        }
+        #canvas {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        /* Tombol kontrol di bagian bawah */
+        #controls {
+            position: relative;
+            z-index: 2;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            background: linear-gradient(transparent, rgba(0,0,0,0.8));
+        }
+        button {
+            border: none;
+            border-radius: 50%; /* Tombol bulat kayak kamera asli */
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: black;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        /* Tombol full layar dan ganti kamera lebih kecil */
+        .small-btn {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 0.8rem;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 2;
+        }
+        .switch-cam-btn {
+            right: 6rem;
+        }
+        /* Tampilan gambar tertangkap */
+        #captured-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 3;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #image-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        #image-controls {
+            position: absolute;
+            bottom: 2rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+        #download-btn {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="video-container">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <button id="fullscreen-btn" class="small-btn" disabled>⛶</button>
+    <button id="switch-cam-btn" class="small-btn switch-cam-btn" disabled>🔄</button>
+
+    <div id="controls">
+        <button id="start-btn">Mulai</button>
+        <button id="capture-btn" disabled>📸</button>
+        <button id="reset-btn" disabled>↩️</button>
+    </div>
+
+    <div id="captured-image">
+        <img id="image-preview" alt="Gambar tertangkap">
+        <div id="image-controls">
+            <button id="back-btn">Kembali</button>
+            <a id="download-btn" download="gambar-kamera.jpg">
+                <button>💾</button>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const startBtn = document.getElementById('start-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const switchCamBtn = document.getElementById('switch-cam-btn');
+        const capturedImage = document.getElementById('captured-image');
+        const imagePreview = document.getElementById('image-preview');
+        const backBtn = document.getElementById('back-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const ctx = canvas.getContext('2d');
+        let currentStream = null;
+        let currentFacingMode = 'environment'; // Awalnya kamera belakang
+
+        // Mulai kamera
+        startBtn.addEventListener('click', async () => {
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode }
+                });
+                video.srcObject = currentStream;
+                toggleButtons(true);
+            } catch (error) {
+                alert('Gagal akses kamera: ' + error.message);
+            }
+        });
+
+        // Ganti kamera depan/belakang
+        switchCamBtn.addEventListener('click', async () => {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            if (currentStream) currentStream.getTracks().forEach(track => track.stop());
+            await startCamera();
+        });
+
+        // Full layar
+        fullscreenBtn.addEventListener('click', () => {
+            const elem = document.documentElement;
+            if (!document.fullscreenElement) {
+                elem.requestFullscreen().catch(err => alert('Gagal full layar: ' + err.message));
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Tangkap gambar
+        captureBtn.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0);
+            const imageUrl = canvas.toDataURL('image/jpeg');
+            imagePreview.src = imageUrl;
+            downloadBtn.href = imageUrl;
+            capturedImage.style.display = 'flex';
+        });
+
+        // Kembali dari pratinjau gambar
+        backBtn.addEventListener('click', () => {
+            capturedImage.style.display = 'none';
+        });
+
+        // Ulangi
+        resetBtn.addEventListener('click', () => {
+            capturedImage.style.display = 'none';
+        });
+
+        // Fungsi bantu
+        async function startCamera() {
+            currentStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentFacingMode } });
+            video.srcObject = currentStream;
+        }
+
+        function toggleButtons(isActive) {
+            startBtn.disabled = isActive;
+            captureBtn.disabled = !isActive;
+            resetBtn.disabled = !isActive;
+            fullscreenBtn.disabled = !isActive;
+            switchCamBtn.disabled = !isActive;
+        }
+    </script>
+</body>
+</html>
