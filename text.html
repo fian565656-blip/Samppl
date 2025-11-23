@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CHS - VVIP BUG TERMINAL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Consolas', 'Courier New', monospace;
+      background-color: #000;
+      color: #00ff00;
+      min-height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background-image: 
+        linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bg-text {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      font-size: 12px;
+      color: rgba(0, 255, 0, 0.05);
+      z-index: 0;
+      user-select: none;
+      animation: scrollText 60s linear infinite;
+    }
+
+    @keyframes scrollText {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-100%); }
+    }
+
+    .terminal-container {
+      background-color: rgba(0, 0, 0, 0.85);
+      border: 2px solid #00ff00;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 500px;
+      height: 90vh;
+      max-height: 700px;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      z-index: 1;
+    }
+
+    .terminal-header {
+      background-color: #00ff00;
+      color: #000;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #000;
+    }
+
+    .terminal-content {
+      flex: 1;
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 25px;
+      overflow-y: auto;
+    }
+
+    .chs-badge {
+      font-size: 1.1em;
+      color: #00ff00;
+      text-align: center;
+      padding: 8px;
+      border: 1px solid #00ff00;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    .terminal-title {
+      font-size: 2.2em;
+      text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 0 0 15px rgba(0, 255, 0, 0.7);
+      letter-spacing: 1px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 1.1em;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.5);
+    }
+
+    .input-group input {
+      padding: 12px 15px;
+      background-color: rgba(0, 30, 0, 0.8);
+      border: 1px solid #00ff00;
+      border-radius: 4px;
+      color: #00ff00;
+      font-size: 1.1em;
+      font-family: monospace;
+      box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.3);
+    }
+
+    .input-group input::placeholder {
+      color: rgba(0, 255, 0, 0.5);
+    }
+
+    /* FIX: Select dan opsi ga abu-abu lagi! */
+    .select-wrapper {
+      position: relative;
+      border: 1px solid #00ff00;
+      border-radius: 4px;
+      background-color: rgba(0, 30, 0, 0.8);
+      box-shadow: inset 0 0 5px rgba(0, 255, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .select-wrapper select {
+      width: 100%;
+      padding: 12px 45px 12px 15px;
+      background-color: transparent; /* Buat background ikut wrapper */
+      border: none; /* Hilangin border default */
+      color: #00ff00;
+      font-size: 1.1em;
+      font-family: monospace;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      z-index: 2;
+      position: relative;
+    }
+
+    /* Ikon panah kustom yang lebih terang */
+    .select-wrapper::after {
+      content: "\f078";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #00ff00;
+      text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+      z-index: 1;
+    }
+
+    /* Opsi bug yang lebih menonjol, ga abu-abu */
+    .select-wrapper select option {
+      background-color: #000; /* Latar hitam murni */
+      color: #00ff00; /* Teks hijau neon */
+      padding: 12px 15px;
+      margin: 2px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    /* Hilangin style hover default browser */
+    .select-wrapper select option:checked,
+    .select-wrapper select option:hover {
+      background-color: rgba(0, 100, 0, 0.5); /* Latar hijau gelap pas hover/terpilih */
+      color: #00ff00; /* Teks tetep terang */
+    }
+
+    /* Variasi warna border dan ikon */
+    .select-wrapper select option[value="bug-vip-1"] {
+      border-left-color: #00ff00;
+    }
+    .select-wrapper select option[value="bug-vip-1"]::before {
+      content: "\f023";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      color: #00ff00;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+    }
+
+    .select-wrapper select option[value="bug-vip-2"] {
+      border-left-color: #00ffcc;
+    }
+    .select-wrapper select option[value="bug-vip-2"]::before {
+      content: "\f0f3";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      color: #00ffcc;
+      text-shadow: 0 0 5px rgba(0, 255, 204, 0.7);
+    }
+
+    .select-wrapper select option[value="bug-vip-3"] {
+      border-left-color: #00ccff;
+    }
+    .select-wrapper select option[value="bug-vip-3"]::before {
+      content: "\f0e7";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      color: #00ccff;
+      text-shadow: 0 0 5px rgba(0, 204, 255, 0.7);
+    }
+
+    .select-wrapper select option[value="bug-vip-4"] {
+      border-left-color: #cc00ff;
+    }
+    .select-wrapper select option[value="bug-vip-4"]::before {
+      content: "\f031";
+      font-family: "Font Awesome 5 Free";
+      font-weight: 900;
+      color: #cc00ff;
+      text-shadow: 0 0 5px rgba(204, 0, 255, 0.7);
+    }
+
+    /* Deskripsi hover yang lebih jelas */
+    .select-wrapper select option[data-desc]:hover::after {
+      content: attr(data-desc);
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: #000;
+      padding: 5px 10px;
+      border: 1px solid #00ff00;
+      border-radius: 3px;
+      font-size: 0.9em;
+      color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+      z-index: 10;
+    }
+
+    .action-button {
+      padding: 14px;
+      background-color: #00ff00;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      font-size: 1.2em;
+      font-weight: bold;
+      font-family: monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .action-button:hover {
+      background-color: #00cc00;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .terminal-footer {
+      padding: 10px 15px;
+      text-align: center;
+      font-size: 0.9em;
+      color: rgba(0, 255, 0, 0.7);
+      border-top: 1px solid #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-text">
+    01001001 01101110 01100111 01110010 01100101 01110011 01110011 01101001 01101111 01101110 | 
+    01000011 01111001 01100010 01100101 01110010 00100000 01001000 01100001 01100011 01101011 01100101 01110010 | 
+    01010011 01110100 01111001 01101100 01100101 | 01010110 01001001 01010000 01000101 01001001 01010100 01011001 |
+    01001001 01101110 01100111 01110010 01100101 01110011 01110011 01101001 01101111 01101110 | 
+    01000011 01111001 01100010 01100101 01110010 00100000 01001000 01100001 01100011 01101011 01100101 01110010 | 
+    01010011 01110100 01111001 01101100 01100101 | 01010110 01001001 01010000 01000101 01001001 01010100 01011001
+  </div>
+
+  <div class="terminal-container">
+    <div class="terminal-header">
+      <span>CHS - BUG TERMINAL V2.2</span>
+      <div class="window-controls">
+        <div class="control-dot"></div>
+        <div class="control-dot"></div>
+        <div class="control-dot"></div>
+      </div>
+    </div>
+
+    <div class="terminal-content">
+      <div class="chs-badge">CYBER HACKER STYLE (CHS) - VVIP EDITION</div>
+      
+      <h1 class="terminal-title">BUG SENDER TERMINAL</h1>
+
+      <div class="input-group">
+        <label for="target-number">[+] NOMOR TARGET (62xxxxxxxxx)</label>
+        <input type="tel" id="target-number" placeholder="Masukkan nomor dengan kode negara" required>
+      </div>
+
+      <div class="input-group">
+        <label for="bug-type">[+] PILIH BUG VVIP</label>
+        <div class="select-wrapper">
+          <select id="bug-type">
+            <option value="none">-- Pilih Tipe Bug --</option>
+            <option value="bug-vip-1" data-desc="Menyebabkan layar target terkunci sementara (VIRTUAL)">BUG VIP 1 - TERMINAL LOCK</option>
+            <option value="bug-vip-2" data-desc="Mengirim notifikasi teks berulang (VIRTUAL)">BUG VIP 2 - NOTIF BLAST</option>
+            <option value="bug-vip-3" data-desc="Menyebabkan layar target berkedip kilat (VIRTUAL)">BUG VIP 3 - SCREEN FLASH</option>
+            <option value="bug-vip-4" data-desc="Menampilkan animasi teks berjalan di layar (VIRTUAL)">BUG VIP 4 - TEXT ANIMATION</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="action-button">[!] EKSEKUSI BUG</button>
+    </div>
+
+    <div class="terminal-footer">
+      © 2024 CHS COMMUNITY - VVIP TERMINAL | HANYA UNTUK TAMPILAN VIRTUAL
+    </div>
+  </div>
+</body>
+</html>
